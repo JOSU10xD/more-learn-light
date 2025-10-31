@@ -104,7 +104,7 @@ const Index = () => {
                   {whyChooseUs.map((feature, index) => (
                     <div
                       key={index}
-                      className="flex items-start gap-3 p-6 bg-card rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow"
+                      className={`flex items-start gap-3 p-6 bg-card rounded-lg border border-border shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 reveal-scale reveal-delay-${index + 1} ${featuresVisible ? 'is-visible' : ''}`}
                     >
                       <CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
                       <p className="text-left font-medium">{feature}</p>
@@ -133,10 +133,9 @@ const Index = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
                   {services.map((service, index) => (
-                    <ServiceCard
-                      key={index}
-                      {...service}
-                    />
+                    <div key={index} className={`reveal-scale reveal-delay-${index + 1} ${servicesVisible ? 'is-visible' : ''}`}>
+                      <ServiceCard {...service} />
+                    </div>
                   ))}
                 </div>
               </div>
@@ -155,10 +154,9 @@ const Index = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
                   {testimonials.map((testimonial, index) => (
-                    <TestimonialCard
-                      key={index}
-                      {...testimonial}
-                    />
+                    <div key={index} className={`reveal-scale reveal-delay-${index + 1} ${testimonialsVisible ? 'is-visible' : ''}`}>
+                      <TestimonialCard {...testimonial} />
+                    </div>
                   ))}
                 </div>
               </div>

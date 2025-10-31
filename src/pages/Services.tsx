@@ -91,10 +91,10 @@ const Services = () => {
                   return (
                     <div 
                       key={index}
-                      className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${isEven ? '' : 'lg:flex-row-reverse'}`}
+                      className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
                     >
                       {/* Content */}
-                      <div className={`space-y-6 ${isEven ? 'lg:order-1' : 'lg:order-2'}`}>
+                      <div className={`space-y-6 ${isEven ? 'lg:order-1 reveal-left' : 'lg:order-2 reveal-right'} is-visible`}>
                         <div className="inline-flex p-4 rounded-lg bg-gradient-primary">
                           <Icon className="h-10 w-10 text-white" />
                         </div>
@@ -125,7 +125,7 @@ const Services = () => {
                       </div>
 
                       {/* Card */}
-                      <div className={isEven ? 'lg:order-2' : 'lg:order-1'}>
+                      <div className={`${isEven ? 'lg:order-2 reveal-right' : 'lg:order-1 reveal-left'} is-visible`}>
                         <ServiceCard {...service} />
                       </div>
                     </div>

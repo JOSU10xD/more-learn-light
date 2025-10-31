@@ -65,9 +65,9 @@ const Contact = () => {
             <div className="container mx-auto px-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
                 {/* Contact Form */}
-                <div>
+                <div className="reveal-left is-visible">
                   <h2 className="text-2xl font-bold mb-6">Quick Contact Form</h2>
-                  <Card>
+                  <Card className="hover:shadow-lg transition-shadow duration-300">
                     <CardContent className="pt-6">
                       <ContactForm />
                     </CardContent>
@@ -75,7 +75,7 @@ const Contact = () => {
                 </div>
 
                 {/* Contact Information */}
-                <div>
+                <div className="reveal-right is-visible">
                   <h2 className="text-2xl font-bold mb-6">Contact Information</h2>
                   <div className="space-y-4">
                     {contactInfo.map((info, index) => {
@@ -92,7 +92,7 @@ const Contact = () => {
                       );
 
                       return (
-                        <Card key={index}>
+                        <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                           <CardHeader>
                             <CardTitle className="flex items-center gap-3 text-lg">
                               <div className="p-2 rounded-lg bg-primary/10">

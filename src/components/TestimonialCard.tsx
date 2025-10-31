@@ -13,7 +13,7 @@ interface TestimonialCardProps {
  */
 export function TestimonialCard({ quote, author, role }: TestimonialCardProps) {
   return (
-    <Card className="h-full bg-gradient-subtle border-none shadow-md">
+    <Card className="h-full bg-gradient-subtle border-none shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
       <CardContent className="pt-6">
         <Quote className="h-8 w-8 text-primary/30 mb-4" />
         <blockquote className="text-base mb-6 text-foreground leading-relaxed">

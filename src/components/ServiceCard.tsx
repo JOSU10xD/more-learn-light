@@ -22,7 +22,7 @@ export function ServiceCard({ icon: Icon, title, description, features, ctaText,
 
   return (
     <div ref={ref} className={`reveal ${isVisible ? 'is-visible' : ''}`}>
-      <Card className="h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      <Card className="h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 hover-lift">
         <CardHeader>
           <div className="mb-4 inline-flex p-3 rounded-lg bg-gradient-primary">
             <Icon className="h-8 w-8 text-white" />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
+import logoFull from '@/assets/logo-full.png';
 
 /**
  * Site footer with links and contact information
@@ -11,12 +12,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                More@Home
-              </span>
-            </div>
+            <Link to="/" className="flex items-center transition-transform duration-300 hover:scale-105">
+              <img src={logoFull} alt="More@Home Learning" className="h-20 w-auto" />
+            </Link>
             <p className="text-sm text-muted-foreground">
               Empowering students, one lesson at a time.
             </p>

@@ -65,10 +65,10 @@ const About = () => {
           {/* Mission & Vision Section */}
           <section className="py-20 bg-background">
             <div className="container mx-auto px-4">
-              <div ref={missionRef} className={`grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto reveal ${missionVisible ? 'is-visible' : ''}`}>
+              <div ref={missionRef} className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
                 {/* Mission */}
-                <div className="bg-card p-8 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow">
-                  <div className="inline-flex p-3 rounded-lg bg-gradient-primary mb-6">
+                <div className={`bg-card p-8 rounded-lg border border-border shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-2 reveal-left ${missionVisible ? 'is-visible' : ''}`}>
+                  <div className="inline-flex p-3 rounded-lg bg-gradient-primary mb-6 transition-transform duration-300 hover:scale-110">
                     <Target className="h-8 w-8 text-white" />
                   </div>
                   <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
@@ -78,8 +78,8 @@ const About = () => {
                 </div>
 
                 {/* Vision */}
-                <div className="bg-card p-8 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow">
-                  <div className="inline-flex p-3 rounded-lg bg-gradient-warm mb-6">
+                <div className={`bg-card p-8 rounded-lg border border-border shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-2 reveal-right ${missionVisible ? 'is-visible' : ''}`}>
+                  <div className="inline-flex p-3 rounded-lg bg-gradient-warm mb-6 transition-transform duration-300 hover:scale-110">
                     <Eye className="h-8 w-8 text-white" />
                   </div>
                   <h2 className="text-2xl font-bold mb-4">Our Vision</h2>
@@ -108,9 +108,9 @@ const About = () => {
                   {coreValues.map((value, index) => (
                     <div
                       key={index}
-                      className="bg-card p-6 rounded-lg border border-border text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                      className={`bg-card p-6 rounded-lg border border-border text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-2 reveal-scale reveal-delay-${index + 1} ${valuesVisible ? 'is-visible' : ''}`}
                     >
-                      <div className="inline-flex p-3 rounded-full bg-primary/10 mb-4">
+                      <div className="inline-flex p-3 rounded-full bg-primary/10 mb-4 transition-transform duration-300 hover:scale-110">
                         <value.icon className="h-8 w-8 text-primary" />
                       </div>
                       <h3 className="text-xl font-bold mb-3">{value.title}</h3>
