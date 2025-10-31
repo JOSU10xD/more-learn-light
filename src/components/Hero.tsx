@@ -61,49 +61,49 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-4xl mx-auto text-center text-white space-y-8 animate-fade-in">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 relative z-10">
+        <div className="max-w-4xl mx-auto text-center text-white space-y-6 sm:space-y-8 animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight px-4">
             Unlock Your Full Potential with Personalized Learning
           </h1>
           
-          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl mx-auto px-4">
             Learning should be engaging, inspiring, and built around you.
             At More@Home, we make education personal — helping students of all ages and abilities thrive academically through tailored tutoring programs.
           </p>
 
           {/* Learning Options */}
-          <div className="flex flex-wrap justify-center gap-6 py-4">
-            <div className="flex items-center gap-2 text-white">
-              <Monitor className="h-5 w-5" />
-              <span className="font-medium">Online</span>
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-6 py-4 px-4">
+            <div className="flex items-center gap-2 text-white bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full">
+              <Monitor className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="font-medium text-xs sm:text-sm md:text-base">Online</span>
             </div>
-            <div className="flex items-center gap-2 text-white">
-              <Home className="h-5 w-5" />
-              <span className="font-medium">At Home</span>
+            <div className="flex items-center gap-2 text-white bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full">
+              <Home className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="font-medium text-xs sm:text-sm md:text-base">At Home</span>
             </div>
-            <div className="flex items-center gap-2 text-white">
-              <School className="h-5 w-5" />
-              <span className="font-medium">At Our Learning Center</span>
+            <div className="flex items-center gap-2 text-white bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full">
+              <School className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="font-medium text-xs sm:text-sm md:text-base">At Our Learning Center</span>
             </div>
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link to="/contact">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center pt-4 px-4">
+            <Link to="/contact" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
                 variant="secondary"
-                className="text-base px-8 shadow-lg hover:shadow-xl transition-all"
+                className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 shadow-lg hover:shadow-xl transition-all rounded-full"
               >
                 Book a Free Consultation
               </Button>
             </Link>
-            <Link to="/services">
+            <Link to="/services" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
                 variant="outline"
-                className="text-base px-8 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:text-white shadow-lg"
+                className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:text-white shadow-lg rounded-full"
               >
                 Explore Our Services
               </Button>

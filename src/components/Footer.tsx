@@ -53,9 +53,21 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Our Services</h3>
             <ul className="space-y-2">
-              <li className="text-sm text-muted-foreground">Online Tutoring</li>
-              <li className="text-sm text-muted-foreground">In-Home Tutoring</li>
-              <li className="text-sm text-muted-foreground">In-School Tutoring</li>
+              <li>
+                <Link to="/services" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Online Tutoring
+                </Link>
+              </li>
+              <li>
+                <Link to="/services" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  In-Home Tutoring
+                </Link>
+              </li>
+              <li>
+                <Link to="/services" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  In-School Tutoring
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -71,8 +83,8 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary" />
-                <a href="tel:+91XXXXXXXXXX" className="hover:text-primary transition-colors">
-                  +91-XXXXXXXXXX
+                <a href="tel:+919446859554" className="hover:text-primary transition-colors">
+                  +91 94468 59554
                 </a>
               </li>
               <li className="flex items-start gap-2 text-sm text-muted-foreground">
