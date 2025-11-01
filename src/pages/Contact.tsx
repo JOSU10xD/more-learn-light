@@ -4,6 +4,7 @@ import { SEOHead } from '@/components/SEOHead';
 import { ContactForm } from '@/components/ContactForm';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import MapEmbed from "@/components/MapEmbed";
 
 /**
  * Contact page
@@ -129,23 +130,20 @@ const Contact = () => {
               <div className="max-w-4xl mx-auto">
                 <h2 className="text-2xl font-bold mb-6 text-center">Find Us</h2>
                 <div className="rounded-lg overflow-hidden shadow-lg border border-border">
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3929.847!2d76.7277!3d9.8334!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOcKwNTAnMDAuMiJOIDc2wrA0Myc0MC4wIkU!5e0!3m2!1sen!2sin!4v1234567890"
-                    width="100%"
-                    height="400"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
+                  <MapEmbed
+                    embedUrl="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3929.847!2d76.7277!3d9.8334!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOcKwNTAnMDAuMiJOIDc2wrA0Myc0MC4wIkU!5e0!3m2!1sen!2sin!4v1234567890"
+                    height="400px"
                     title="More@Home Location - 2nd Floor, Puthiyarakkattu building, Thodupuzha, Kerala 685584"
                   />
                 </div>
+
                 <p className="text-center text-muted-foreground mt-4">
                   2nd Floor, Puthiyarakkattu building, Thodupuzha, Kerala 685584
                 </p>
               </div>
             </div>
           </section>
+
         </main>
         <Footer />
       </div>

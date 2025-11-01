@@ -6,6 +6,7 @@ import { MapPin, Clock, Users, Wifi, Book, Coffee } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import MapEmbed from "@/components/MapEmbed";
 
 /**
  * Learning Center page
@@ -193,20 +194,28 @@ const Center = () => {
             </div>
           </section>
 
-          {/* Map Section - Placeholder */}
+          {/* Map Section */}
           <section className="py-12 bg-background">
             <div className="container mx-auto px-4">
               <div className="max-w-6xl mx-auto">
-                <div className="bg-muted rounded-lg p-12 text-center border border-border">
-                  <MapPin className="h-16 w-16 text-primary mx-auto mb-4" />
+                <div className="rounded-lg overflow-hidden shadow-lg border border-border">
+                  <MapEmbed
+                    embedUrl="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3929.847!2d76.7277!3d9.8334!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zOcKwNTAnMDAuMiJOIDc2wrA0Myc0MC4wIkU!5e0!3m2!1sen!2sin!4v1234567890"
+                    height="420px"
+                    title="More@Home Location - 2nd Floor, Puthiyarakkattu building, Thodupuzha, Kerala 685584"
+                  />
+                </div>
+
+                <div className="text-center mt-6">
                   <h3 className="text-xl font-semibold mb-2">Map Loading Area</h3>
                   <p className="text-muted-foreground">
-                    Interactive map would be embedded here showing the center location
+                    Interactive map showing the center location.
                   </p>
                 </div>
               </div>
             </div>
           </section>
+
         </main>
         <Footer />
       </div>
