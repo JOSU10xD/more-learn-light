@@ -34,12 +34,15 @@ export function SEOHead({
       "name": "More@Home",
       "description": description,
       "url": window.location.origin,
-      "telephone": "+91-XXXXXXXXXX",
+      "telephone": "+91 94468 59554",
       "email": "info@moreathome.in",
       "priceRange": "$$",
       "address": {
         "@type": "PostalAddress",
-        "addressLocality": "Your City",
+        "streetAddress": "2nd Floor, Puthiyarakkattu building",
+        "addressLocality": "Thodupuzha",
+        "addressRegion": "Kerala",
+        "postalCode": "685584",
         "addressCountry": "IN"
       },
       "openingHours": "Mo-Sa 09:00-19:00",

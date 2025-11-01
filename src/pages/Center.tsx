@@ -80,7 +80,7 @@ const Center = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground">Your Center's Address</p>
+                      <p className="text-muted-foreground">2nd Floor, Puthiyarakkattu building, Thodupuzha, Kerala 685584</p>
                       <p className="text-sm text-muted-foreground mt-2">
                         Easily accessible with ample parking available
                       </p>

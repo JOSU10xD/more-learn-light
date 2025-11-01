@@ -165,7 +165,7 @@ export function ContactForm() {
           type="tel"
           value={formData.phone}
           onChange={handleChange}
-          placeholder="+91 98765 43210"
+          placeholder="Your phone number"
           className={errors.phone ? 'border-destructive' : ''}
         />
         {errors.phone && (
