@@ -35,7 +35,7 @@ export function SEOHead({
       "description": description,
       "url": window.location.origin,
       "telephone": "+91-XXXXXXXXXX",
-      "email": "info@moreathome.com",
+      "email": "info@moreathome.in",
       "priceRange": "$$",
       "address": {
         "@type": "PostalAddress",

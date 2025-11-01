@@ -52,17 +52,17 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Our Services</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/services" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/services" className="text-sm text-muted-foreground hover:text-primary transition-colors block">
                   Online Tutoring
                 </Link>
               </li>
               <li>
-                <Link to="/services" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/services" className="text-sm text-muted-foreground hover:text-primary transition-colors block">
                   In-Home Tutoring
                 </Link>
               </li>
               <li>
-                <Link to="/services" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/services" className="text-sm text-muted-foreground hover:text-primary transition-colors block">
                   In-School Tutoring
                 </Link>
               </li>
@@ -75,8 +75,8 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary" />
-                <a href="mailto:info@moreathome.com" className="hover:text-primary transition-colors">
-                  info@moreathome.com
+                <a href="mailto:info@moreathome.in" className="hover:text-primary transition-colors">
+                  info@moreathome.in
                 </a>
               </li>
               <li className="flex items-center gap-2 text-sm text-muted-foreground">

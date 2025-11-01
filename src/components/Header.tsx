@@ -26,10 +26,10 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 rounded-b-3xl shadow-md transition-all duration-300">
       <div className="container mx-auto px-4 md:px-6">
-        <div className="flex h-24 md:h-28 items-center justify-between">
+        <div className="flex h-16 md:h-20 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center transition-transform duration-300 hover:scale-105">
-            <img src={logoFull} alt="More@Home Learning" className="h-16 md:h-20 w-auto" />
+            <img src={logoFull} alt="More@Home Learning" className="h-12 md:h-14 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}

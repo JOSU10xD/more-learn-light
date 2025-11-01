@@ -14,8 +14,8 @@ const Contact = () => {
     {
       icon: Mail,
       title: 'Email',
-      content: 'info@moreathome.com',
-      link: 'mailto:info@moreathome.com'
+      content: 'info@moreathome.in',
+      link: 'mailto:info@moreathome.in'
     },
     {
       icon: Phone,
