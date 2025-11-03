@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,14 +7,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 /**
- * ContactForm — posts to FormSubmit using the activation token (obfuscated endpoint).
+ * ContactForm using a hidden iframe submit so the SPA never navigates.
+ * - Uses FormSubmit token endpoint (no naked email in action).
+ * - No `_next` param (so no redirect to a non-existent /thank-you).
+ * - Shows a toast on iframe load (indicates endpoint responded).
+ * - Prevents double-send (no fetch + fallback).
  *
- * Notes:
- * - Replace FORM_ACTION_TOKEN with the token FormSubmit provided.
- * - If you want the site to redirect to a custom thank-you page after native form submit,
- *   adjust the `_next` value below (currently uses window.location.origin + '/thank-you').
- * - If the form is submitted from a new origin (domain), FormSubmit will send an activation
- *   email to the recipient and you'll need to click that once for that origin.
+ * Note: the very first submission from a new origin may trigger an activation email
+ * to info@moreathome.in (FormSubmit behavior). After activation, normal forwards happen.
  */
 
 type FormState = {
@@ -27,6 +27,7 @@ type FormState = {
 
 const FORM_ACTION_TOKEN = '983cfc4a9751fab8a0b354958222f5e3';
 const FORM_ACTION = `https://formsubmit.co/${FORM_ACTION_TOKEN}`;
+const IFRAME_NAME = 'formsubmit_hidden_iframe';
 
 export function ContactForm(): JSX.Element {
   const { toast } = useToast();
@@ -39,13 +40,75 @@ export function ContactForm(): JSX.Element {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const pendingSubmitRef = useRef<HTMLFormElement | null>(null); // for cleanup/diagnostics
+
+  // Create hidden iframe once
+  useEffect(() => {
+    if (document.getElementById(IFRAME_NAME)) {
+      iframeRef.current = document.getElementById(IFRAME_NAME) as HTMLIFrameElement;
+      return;
+    }
+
+    const iframe = document.createElement('iframe');
+    iframe.name = IFRAME_NAME;
+    iframe.id = IFRAME_NAME;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    iframeRef.current = iframe;
+
+    return () => {
+      // keep iframe if you want persistence; here we remove on unmount
+      try {
+        iframe.remove();
+      } catch {}
+    };
+  }, []);
+
+  // Listen for iframe load event to confirm server response
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const onLoad = () => {
+      // Called when the iframe finishes loading whatever FormSubmit returned.
+      // We can't read iframe contents cross-origin, but load event means the POST completed.
+      if (!isSubmitting) return; // ignore unrelated loads
+      setIsSubmitting(false);
+
+      toast({
+        title: 'Message Sent Successfully!',
+        description: "Thanks — we'll get back to you soon.",
+      });
+
+      // Reset the form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        message: '',
+        honeypot: '',
+      });
+      setErrors({});
+
+      // cleanup pending form if any
+      if (pendingSubmitRef.current) {
+        try {
+          pendingSubmitRef.current.remove();
+        } catch {}
+        pendingSubmitRef.current = null;
+      }
+    };
+
+    iframe.addEventListener('load', onLoad);
+    return () => iframe.removeEventListener('load', onLoad);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [iframeRef.current, isSubmitting]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
 
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
@@ -59,25 +122,34 @@ export function ContactForm(): JSX.Element {
       newErrors.phone = 'Invalid phone number';
     }
 
-    if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
-    }
+    if (!formData.message.trim()) newErrors.message = 'Message is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const createAndSubmitNativeForm = () => {
-    // Native form fallback (will navigate / redirect normally)
-    const action = FORM_ACTION;
+  const submitToIframe = () => {
+    // Build a native form, target the hidden iframe, submit it — no navigation.
+    const iframe = iframeRef.current;
+    if (!iframe) {
+      throw new Error('Hidden iframe not available');
+    }
+
+    // remove any previous pending form
+    if (pendingSubmitRef.current) {
+      try {
+        pendingSubmitRef.current.remove();
+      } catch {}
+      pendingSubmitRef.current = null;
+    }
+
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = action;
-    // Use target _self to keep user on same tab; change to _blank if you prefer new tab
-    form.target = '_self';
+    form.action = FORM_ACTION;
+    form.target = IFRAME_NAME;
     form.style.display = 'none';
 
-    const addInput = (name: string, value: string) => {
+    const add = (name: string, value: string) => {
       const input = document.createElement('input');
       input.type = 'hidden';
       input.name = name;
@@ -85,34 +157,28 @@ export function ContactForm(): JSX.Element {
       form.appendChild(input);
     };
 
-    addInput('name', formData.name);
-    addInput('email', formData.email);
-    addInput('phone', formData.phone || 'Not provided');
-    addInput('message', formData.message);
-    addInput('_replyto', formData.email);
-    addInput('_subject', `Website Contact - ${formData.name}`);
-    addInput('_captcha', 'false');
-
-    // Provide a next page so the user sees a friendly thank-you after native submission
-    try {
-      const nextUrl = `${window.location.origin}/thank-you`;
-      addInput('_next', nextUrl);
-    } catch {
-      // window might not be available in SSR contexts; ignore if so
-    }
-
-    // Honeypot retained
-    addInput('honeypot', formData.honeypot);
+    add('name', formData.name);
+    add('email', formData.email);
+    add('phone', formData.phone || 'Not provided');
+    add('message', formData.message);
+    add('_replyto', formData.email);
+    add('_subject', `Website Contact - ${formData.name}`);
+    add('_captcha', 'false');
+    // DO NOT add _next — avoids redirect/navigation in main window or iframe target confusion
+    add('honeypot', formData.honeypot);
 
     document.body.appendChild(form);
+    pendingSubmitRef.current = form;
+
+    // Submit the form (request goes to FormSubmit, response loads into iframe)
     form.submit();
-    document.body.removeChild(form);
+    // Do NOT remove the form immediately — remove it after iframe load handler cleans it up.
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Honeypot check
+    // honeypot
     if (formData.honeypot) return;
 
     if (!validateForm()) {
@@ -127,77 +193,22 @@ export function ContactForm(): JSX.Element {
     setIsSubmitting(true);
 
     try {
-      // Build urlencoded body (FormSubmit expects a standard form POST)
-      const params = new URLSearchParams();
-      params.append('name', formData.name);
-      params.append('email', formData.email);
-      params.append('phone', formData.phone || 'Not provided');
-      params.append('message', formData.message);
-      params.append('_replyto', formData.email);
-      params.append('_subject', `Website Contact - ${formData.name}`);
-      params.append('_captcha', 'false');
-
-      // Also add a _next redirect so if FormSubmit processes natively, user sees thank-you
-      try {
-        params.append('_next', `${window.location.origin}/thank-you`);
-      } catch {
-        // ignore in SSR or non-window contexts
-      }
-
-      // Attempt fetch POST first (SPA-friendly)
-      const response = await fetch(FORM_ACTION, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        },
-        body: params.toString(),
-      });
-
-      // Treat any 2xx as success — FormSubmit often returns HTML/plain text responses.
-      if (response.ok) {
-        toast({
-          title: 'Message Sent Successfully!',
-          description: "Thanks — we'll get back to you soon.",
-        });
-
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          message: '',
-          honeypot: '',
-        });
-        setErrors({});
-      } else {
-        // Non-2xx: fallback to native submit so FormSubmit receives a proper form POST and redirect
-        console.warn('FormSubmit fetch returned non-OK, using native fallback', {
-          status: response.status,
-          statusText: response.statusText,
-        });
-        createAndSubmitNativeForm();
-      }
+      submitToIframe();
+      // success toast will be shown after iframe load
     } catch (err) {
-      // Likely a CORS or network error — native fallback
-      console.error('Error posting to FormSubmit (fetch):', err);
-      try {
-        createAndSubmitNativeForm();
-      } catch (fallbackErr) {
-        console.error('Native fallback failed:', fallbackErr);
-        toast({
-          title: 'Error Sending Message',
-          description: 'Please try again later or contact us directly at info@moreathome.in',
-          variant: 'destructive',
-        });
-      }
-    } finally {
+      console.error('Submit failed (iframe method):', err);
       setIsSubmitting(false);
+      toast({
+        title: 'Error Sending Message',
+        description: 'Please try again later or contact us at info@moreathome.in',
+        variant: 'destructive',
+      });
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     if (errors[name]) {
       setErrors((prev) => {
         const copy = { ...prev };
@@ -209,7 +220,6 @@ export function ContactForm(): JSX.Element {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-      {/* Honeypot field - hidden from users */}
       <input
         type="text"
         name="honeypot"
