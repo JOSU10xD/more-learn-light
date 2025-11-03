@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,22 +7,38 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 /**
- * Contact form component with PHP backend email delivery
- * Sends emails to info@moreathome.in via /api/send.php
+ * Contact form that posts to FormSubmit:
+ * https://formsubmit.co/info@moreathome.in
+ *
+ * Notes:
+ * - FormSubmit requires the recipient email (info@moreathome.in) to click
+ *   a confirmation link the first time a site tries to send to that address.
+ * - We attempt a fetch POST with urlencoded body. If that fails (CORS/network),
+ *   we fallback to creating and submitting a native form that opens in a new tab.
  */
-export function ContactForm() {
+
+type FormState = {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  honeypot: string;
+};
+
+export function ContactForm(): JSX.Element {
   const { toast } = useToast();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormState>({
     name: '',
     email: '',
     phone: '',
     message: '',
-    honeypot: '' // spam protection
+    honeypot: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fallbackFormRef = useRef<HTMLFormElement | null>(null);
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
@@ -49,19 +65,51 @@ export function ContactForm() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const createAndSubmitNativeForm = () => {
+    // Fallback: create a native form and submit it (opens in new tab to avoid navigation)
+    const action = 'https://formsubmit.co/info@moreathome.in';
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = action;
+    form.target = '_blank'; // open in new tab so SPA isn't navigated away
+    form.style.display = 'none';
+
+    const addInput = (name: string, value: string) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    };
+
+    addInput('name', formData.name);
+    addInput('email', formData.email);
+    addInput('phone', formData.phone || 'Not provided');
+    addInput('message', formData.message);
+    addInput('_replyto', formData.email);
+    addInput('_subject', `Website Contact - ${formData.name}`);
+    addInput('_captcha', 'false');
+    // Honeypot (if set) - FormSubmit ignores unknown fields but keep for consistency
+    addInput('honeypot', formData.honeypot);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Honeypot check
+    // Honeypot check: silently ignore bots
     if (formData.honeypot) {
       return;
     }
 
     if (!validateForm()) {
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields correctly.",
-        variant: "destructive",
+        title: 'Validation Error',
+        description: 'Please fill in all required fields correctly.',
+        variant: 'destructive',
       });
       return;
     }
@@ -69,49 +117,93 @@ export function ContactForm() {
     setIsSubmitting(true);
 
     try {
-      // Using Formspree - Free email service (50 emails/month)
-      // Emails will be sent to: info@moreathome.in
-      const response = await fetch('https://formspree.io/f/mldeklew', {
+      // Build urlencoded body (FormSubmit expects normal form POST)
+      const params = new URLSearchParams();
+      params.append('name', formData.name);
+      params.append('email', formData.email);
+      params.append('phone', formData.phone || 'Not provided');
+      params.append('message', formData.message);
+      params.append('_replyto', formData.email); // reply-to header
+      params.append('_subject', `Website Contact - ${formData.name}`);
+      params.append('_captcha', 'false'); // disable captcha (optional)
+
+      // Attempt fetch POST first (keeps SPA UX)
+      const response = await fetch('https://formsubmit.co/info@moreathome.in', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || 'Not provided',
-          message: formData.message,
-          _replyto: formData.email, // Reply-to will be the sender's email
-          _subject: `Website Contact - ${formData.name}`,
-        })
+        body: params.toString(),
       });
 
+      // Note: FormSubmit may return HTML/redirects (not JSON).
+      // We treat any 2xx response as success.
       if (response.ok) {
         toast({
-          title: "Message Sent Successfully!",
-          description: "Thank you for contacting us. We'll get back to you soon.",
+          title: 'Message Sent Successfully!',
+          description:
+            "Thank you for contacting us. We'll get back to you soon. (If this is the first time, the recipient must confirm FormSubmit's activation email.)",
         });
 
-        // Reset form on success
         setFormData({
           name: '',
           email: '',
           phone: '',
           message: '',
-          honeypot: ''
+          honeypot: '',
         });
         setErrors({});
       } else {
-        throw new Error('Failed to send message');
-      }
+        // Non-2xx — attempt fallback native form submit
+        console.warn('FormSubmit fetch returned non-OK status, falling back to native form submit.', {
+          status: response.status,
+          statusText: response.statusText,
+        });
+        createAndSubmitNativeForm();
 
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: "Error Sending Message",
-        description: "Please try again later or contact us directly at info@moreathome.in",
-        variant: "destructive",
-      });
+        toast({
+          title: 'Submitted (fallback)',
+          description:
+            'Could not submit via fetch (CORS/network). A fallback native form was opened in a new tab.',
+        });
+
+        // Clear form since fallback will handle the send
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          message: '',
+          honeypot: '',
+        });
+        setErrors({});
+      }
+    } catch (err) {
+      console.error('Error sending message via FormSubmit fetch:', err);
+      // On network/CORS errors, fallback to native form submit
+      try {
+        createAndSubmitNativeForm();
+        toast({
+          title: 'Submitted (fallback)',
+          description:
+            'Network/CORS prevented direct submission. A fallback native form has been opened in a new tab.',
+        });
+
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          message: '',
+          honeypot: '',
+        });
+        setErrors({});
+      } catch (fallbackErr) {
+        console.error('Fallback native form failed:', fallbackErr);
+        toast({
+          title: 'Error Sending Message',
+          description: 'Please try again later or contact us directly at info@moreathome.in',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -119,20 +211,19 @@ export function ContactForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Clear error for this field
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[name];
+        return copy;
       });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       {/* Honeypot field - hidden from users */}
       <input
         type="text"
@@ -156,9 +247,7 @@ export function ContactForm() {
           placeholder="Your full name"
           className={errors.name ? 'border-destructive' : ''}
         />
-        {errors.name && (
-          <p className="text-sm text-destructive">{errors.name}</p>
-        )}
+        {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
       </div>
 
       <div className="space-y-2">
@@ -174,9 +263,7 @@ export function ContactForm() {
           placeholder="your.email@example.com"
           className={errors.email ? 'border-destructive' : ''}
         />
-        {errors.email && (
-          <p className="text-sm text-destructive">{errors.email}</p>
-        )}
+        {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
       </div>
 
       <div className="space-y-2">
@@ -192,9 +279,7 @@ export function ContactForm() {
           placeholder="Your phone number"
           className={errors.phone ? 'border-destructive' : ''}
         />
-        {errors.phone && (
-          <p className="text-sm text-destructive">{errors.phone}</p>
-        )}
+        {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
       </div>
 
       <div className="space-y-2">
@@ -210,9 +295,7 @@ export function ContactForm() {
           rows={5}
           className={errors.message ? 'border-destructive' : ''}
         />
-        {errors.message && (
-          <p className="text-sm text-destructive">{errors.message}</p>
-        )}
+        {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -225,7 +308,7 @@ export function ContactForm() {
           'Send Message'
         )}
       </Button>
-      
+
       <p className="text-xs text-muted-foreground text-center mt-2">
         Your message will be sent to info@moreathome.in
       </p>
