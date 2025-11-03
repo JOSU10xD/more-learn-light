@@ -4,9 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 /**
- * Contact form component with mailto functionality
+ * Contact form component with PHP backend email delivery
+ * Sends emails to info@moreathome.in via /api/send.php
  */
 export function ContactForm() {
   const { toast } = useToast();
@@ -18,6 +20,7 @@ export function ContactForm() {
     honeypot: '' // spam protection
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -46,7 +49,7 @@ export function ContactForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Honeypot check
@@ -63,34 +66,110 @@ export function ContactForm() {
       return;
     }
 
-    // Create mailto link with form data
-    const subject = encodeURIComponent(`Contact Form: ${formData.name}`);
-    const body = encodeURIComponent(
-      `Name: ${formData.name}\n` +
-      `Email: ${formData.email}\n` +
-      `Phone: ${formData.phone}\n\n` +
-      `Message:\n${formData.message}`
-    );
-    
-    const mailtoLink = `mailto:info@moreathome.in?subject=${subject}&body=${body}`;
-    
-    // Open email client
-    window.location.href = mailtoLink;
+    setIsSubmitting(true);
 
-    toast({
-      title: "Opening Email Client",
-      description: "Your default email application will open with your message pre-filled.",
-    });
+    try {
+      // ============================================================
+      // PRIMARY METHOD: PHP Backend (Hostinger)
+      // ============================================================
+      const response = await fetch('/api/send.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.message,
+          honeypot: formData.honeypot
+        })
+      });
 
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      message: '',
-      honeypot: ''
-    });
-    setErrors({});
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        toast({
+          title: "Message Sent Successfully!",
+          description: "Thank you for contacting us. We'll get back to you soon.",
+        });
+
+        // Reset form on success
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          message: '',
+          honeypot: ''
+        });
+        setErrors({});
+      } else {
+        throw new Error(result.message || 'Failed to send message');
+      }
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error Sending Message",
+        description: error instanceof Error ? error.message : "Please try again later or contact us directly at info@moreathome.in",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+
+    // ============================================================
+    // ALTERNATIVE METHOD: Formspree (No Backend Required)
+    // ============================================================
+    // Uncomment this section and comment out the PHP backend code above
+    // to use Formspree instead (free tier: 50 submissions/month)
+    // 
+    // Steps:
+    // 1. Sign up at https://formspree.io
+    // 2. Create a form with recipient: info@moreathome.in
+    // 3. Replace YOUR_FORM_ID below with your actual form ID
+    /*
+    try {
+      const response = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.message,
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Message Sent Successfully!",
+          description: "Thank you for contacting us. We'll get back to you soon.",
+        });
+        
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          message: '',
+          honeypot: ''
+        });
+        setErrors({});
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      toast({
+        title: "Error Sending Message",
+        description: "Please try again later or contact us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+    */
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -191,9 +270,20 @@ export function ContactForm() {
         )}
       </div>
 
-      <Button type="submit" className="w-full">
-        Send Message
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Sending...
+          </>
+        ) : (
+          'Send Message'
+        )}
       </Button>
+      
+      <p className="text-xs text-muted-foreground text-center mt-2">
+        Your message will be sent to info@moreathome.in
+      </p>
     </form>
   );
 }
