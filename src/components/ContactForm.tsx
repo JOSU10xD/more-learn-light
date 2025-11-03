@@ -69,10 +69,9 @@ export function ContactForm() {
     setIsSubmitting(true);
 
     try {
-      // ============================================================
-      // PRIMARY METHOD: PHP Backend (Hostinger)
-      // ============================================================
-      const response = await fetch('/api/send.php', {
+      // Using Formspree - Free email service (50 emails/month)
+      // Emails will be sent to: info@moreathome.in
+      const response = await fetch('https://formspree.io/f/mldeklew', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,15 +79,14 @@ export function ContactForm() {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          phone: formData.phone,
+          phone: formData.phone || 'Not provided',
           message: formData.message,
-          honeypot: formData.honeypot
+          _replyto: formData.email, // Reply-to will be the sender's email
+          _subject: `Website Contact - ${formData.name}`,
         })
       });
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
+      if (response.ok) {
         toast({
           title: "Message Sent Successfully!",
           description: "Thank you for contacting us. We'll get back to you soon.",
@@ -104,72 +102,19 @@ export function ContactForm() {
         });
         setErrors({});
       } else {
-        throw new Error(result.message || 'Failed to send message');
+        throw new Error('Failed to send message');
       }
 
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
         title: "Error Sending Message",
-        description: error instanceof Error ? error.message : "Please try again later or contact us directly at info@moreathome.in",
+        description: "Please try again later or contact us directly at info@moreathome.in",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
-
-    // ============================================================
-    // ALTERNATIVE METHOD: Formspree (No Backend Required)
-    // ============================================================
-    // Uncomment this section and comment out the PHP backend code above
-    // to use Formspree instead (free tier: 50 submissions/month)
-    // 
-    // Steps:
-    // 1. Sign up at https://formspree.io
-    // 2. Create a form with recipient: info@moreathome.in
-    // 3. Replace YOUR_FORM_ID below with your actual form ID
-    /*
-    try {
-      const response = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          message: formData.message,
-        })
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Message Sent Successfully!",
-          description: "Thank you for contacting us. We'll get back to you soon.",
-        });
-        
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          message: '',
-          honeypot: ''
-        });
-        setErrors({});
-      } else {
-        throw new Error('Failed to send message');
-      }
-    } catch (error) {
-      toast({
-        title: "Error Sending Message",
-        description: "Please try again later or contact us directly.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-    */
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
