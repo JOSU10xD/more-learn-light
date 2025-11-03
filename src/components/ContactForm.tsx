@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,14 +7,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 /**
- * Contact form that posts to FormSubmit:
- * https://formsubmit.co/info@moreathome.in
+ * ContactForm — posts to FormSubmit using the activation token (obfuscated endpoint).
  *
  * Notes:
- * - FormSubmit requires the recipient email (info@moreathome.in) to click
- *   a confirmation link the first time a site tries to send to that address.
- * - We attempt a fetch POST with urlencoded body. If that fails (CORS/network),
- *   we fallback to creating and submitting a native form that opens in a new tab.
+ * - Replace FORM_ACTION_TOKEN with the token FormSubmit provided.
+ * - If you want the site to redirect to a custom thank-you page after native form submit,
+ *   adjust the `_next` value below (currently uses window.location.origin + '/thank-you').
+ * - If the form is submitted from a new origin (domain), FormSubmit will send an activation
+ *   email to the recipient and you'll need to click that once for that origin.
  */
 
 type FormState = {
@@ -24,6 +24,9 @@ type FormState = {
   message: string;
   honeypot: string;
 };
+
+const FORM_ACTION_TOKEN = '983cfc4a9751fab8a0b354958222f5e3';
+const FORM_ACTION = `https://formsubmit.co/${FORM_ACTION_TOKEN}`;
 
 export function ContactForm(): JSX.Element {
   const { toast } = useToast();
@@ -36,7 +39,6 @@ export function ContactForm(): JSX.Element {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const fallbackFormRef = useRef<HTMLFormElement | null>(null);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -66,12 +68,13 @@ export function ContactForm(): JSX.Element {
   };
 
   const createAndSubmitNativeForm = () => {
-    // Fallback: create a native form and submit it (opens in new tab to avoid navigation)
-    const action = 'https://formsubmit.co/info@moreathome.in';
+    // Native form fallback (will navigate / redirect normally)
+    const action = FORM_ACTION;
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = action;
-    form.target = '_blank'; // open in new tab so SPA isn't navigated away
+    // Use target _self to keep user on same tab; change to _blank if you prefer new tab
+    form.target = '_self';
     form.style.display = 'none';
 
     const addInput = (name: string, value: string) => {
@@ -89,7 +92,16 @@ export function ContactForm(): JSX.Element {
     addInput('_replyto', formData.email);
     addInput('_subject', `Website Contact - ${formData.name}`);
     addInput('_captcha', 'false');
-    // Honeypot (if set) - FormSubmit ignores unknown fields but keep for consistency
+
+    // Provide a next page so the user sees a friendly thank-you after native submission
+    try {
+      const nextUrl = `${window.location.origin}/thank-you`;
+      addInput('_next', nextUrl);
+    } catch {
+      // window might not be available in SSR contexts; ignore if so
+    }
+
+    // Honeypot retained
     addInput('honeypot', formData.honeypot);
 
     document.body.appendChild(form);
@@ -100,10 +112,8 @@ export function ContactForm(): JSX.Element {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Honeypot check: silently ignore bots
-    if (formData.honeypot) {
-      return;
-    }
+    // Honeypot check
+    if (formData.honeypot) return;
 
     if (!validateForm()) {
       toast({
@@ -117,18 +127,25 @@ export function ContactForm(): JSX.Element {
     setIsSubmitting(true);
 
     try {
-      // Build urlencoded body (FormSubmit expects normal form POST)
+      // Build urlencoded body (FormSubmit expects a standard form POST)
       const params = new URLSearchParams();
       params.append('name', formData.name);
       params.append('email', formData.email);
       params.append('phone', formData.phone || 'Not provided');
       params.append('message', formData.message);
-      params.append('_replyto', formData.email); // reply-to header
+      params.append('_replyto', formData.email);
       params.append('_subject', `Website Contact - ${formData.name}`);
-      params.append('_captcha', 'false'); // disable captcha (optional)
+      params.append('_captcha', 'false');
 
-      // Attempt fetch POST first (keeps SPA UX)
-      const response = await fetch('https://formsubmit.co/info@moreathome.in', {
+      // Also add a _next redirect so if FormSubmit processes natively, user sees thank-you
+      try {
+        params.append('_next', `${window.location.origin}/thank-you`);
+      } catch {
+        // ignore in SSR or non-window contexts
+      }
+
+      // Attempt fetch POST first (SPA-friendly)
+      const response = await fetch(FORM_ACTION, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
@@ -136,13 +153,11 @@ export function ContactForm(): JSX.Element {
         body: params.toString(),
       });
 
-      // Note: FormSubmit may return HTML/redirects (not JSON).
-      // We treat any 2xx response as success.
+      // Treat any 2xx as success — FormSubmit often returns HTML/plain text responses.
       if (response.ok) {
         toast({
           title: 'Message Sent Successfully!',
-          description:
-            "Thank you for contacting us. We'll get back to you soon. (If this is the first time, the recipient must confirm FormSubmit's activation email.)",
+          description: "Thanks — we'll get back to you soon.",
         });
 
         setFormData({
@@ -154,50 +169,20 @@ export function ContactForm(): JSX.Element {
         });
         setErrors({});
       } else {
-        // Non-2xx — attempt fallback native form submit
-        console.warn('FormSubmit fetch returned non-OK status, falling back to native form submit.', {
+        // Non-2xx: fallback to native submit so FormSubmit receives a proper form POST and redirect
+        console.warn('FormSubmit fetch returned non-OK, using native fallback', {
           status: response.status,
           statusText: response.statusText,
         });
         createAndSubmitNativeForm();
-
-        toast({
-          title: 'Submitted (fallback)',
-          description:
-            'Could not submit via fetch (CORS/network). A fallback native form was opened in a new tab.',
-        });
-
-        // Clear form since fallback will handle the send
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          message: '',
-          honeypot: '',
-        });
-        setErrors({});
       }
     } catch (err) {
-      console.error('Error sending message via FormSubmit fetch:', err);
-      // On network/CORS errors, fallback to native form submit
+      // Likely a CORS or network error — native fallback
+      console.error('Error posting to FormSubmit (fetch):', err);
       try {
         createAndSubmitNativeForm();
-        toast({
-          title: 'Submitted (fallback)',
-          description:
-            'Network/CORS prevented direct submission. A fallback native form has been opened in a new tab.',
-        });
-
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          message: '',
-          honeypot: '',
-        });
-        setErrors({});
       } catch (fallbackErr) {
-        console.error('Fallback native form failed:', fallbackErr);
+        console.error('Native fallback failed:', fallbackErr);
         toast({
           title: 'Error Sending Message',
           description: 'Please try again later or contact us directly at info@moreathome.in',
